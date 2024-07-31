@@ -3,9 +3,10 @@ import requests
 from dotenv import load_dotenv
 import speech_recognition as sr
 import google.generativeai as genai
-from scipy.io.wavfile import write as write_wav
 from pydub import AudioSegment
 from pydub.playback import play
+from io import BytesIO
+import subprocess
 
 # Load environment variables from .env file
 load_dotenv()
@@ -68,15 +69,25 @@ def generate_content(text):
 
     return response.text
 
-def generate_audio_from_text(text, filename="bark_generation.wav"):
+def generate_audio_from_text(text):
     # Generate audio from text using Hugging Face API
     audio_bytes = query({"inputs": text})
-    
-    # Save audio to disk
-    with open(filename, "wb") as audio_file:
-        audio_file.write(audio_bytes)
 
-    return filename
+    # Save the raw audio bytes to a file
+    raw_audio_file = "raw_audio_output"
+    with open(raw_audio_file, "wb") as f:
+        f.write(audio_bytes)
+
+    # Convert raw audio to WAV using ffmpeg
+    wav_audio_file = "bark_generation.wav"
+    subprocess.run([
+        'ffmpeg', '-y', '-i', raw_audio_file, '-f', 'wav', wav_audio_file
+    ], check=True)
+
+    # Clean up raw audio file
+    os.remove(raw_audio_file)
+
+    return wav_audio_file
 
 def play_audio(filename):
     # Load and play the generated audio file
