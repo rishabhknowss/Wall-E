@@ -1,19 +1,19 @@
 # Wall-E
 
-Bhai phele Venv bna lena 
+Bhai phele Venv bna lena , mai Python 3.11.4 use karra
+
+and phele se venv , pycache hai toh delete kar lena 
 
 ```
 python3 -m venv venv   
 source venv/bin/activate             
 ```
 
-fir ye sab install karna 
+# Requirements Installation
+```
+pip install -r requirements.txt
+```
 
-```
-pip install SpeechRecognition
-pip install google-generativeai
-pip install python-dotenv
-```
 
 ## RUN
 

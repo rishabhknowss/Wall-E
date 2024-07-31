@@ -1,13 +1,30 @@
 import os
+import requests
 from dotenv import load_dotenv
 import speech_recognition as sr
 import google.generativeai as genai
+from scipy.io.wavfile import write as write_wav
+from pydub import AudioSegment
+from pydub.playback import play
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Get the API key from environment variables
+# Get the API keys from environment variables
 api_key = os.getenv("GOOGLE_API_KEY")
+hf_token = os.getenv("HUGGINGFACE_API_KEY")
+
+# API URL and headers for Hugging Face
+API_URL = "https://api-inference.huggingface.co/models/facebook/mms-tts-eng"
+headers = {"Authorization": f"Bearer {hf_token}"}
+
+def query(payload):
+    response = requests.post(API_URL, headers=headers, json=payload)
+    if response.status_code != 200:
+        print(f"Error: {response.status_code}")
+        print(response.json())  # Print the response JSON for debugging
+    response.raise_for_status()  # Ensure we raise an error for bad responses
+    return response.content
 
 def speech_to_text(filename):
     recognizer = sr.Recognizer()
@@ -49,15 +66,38 @@ def generate_content(text):
 
     print(response.text)
 
+    return response.text
+
+def generate_audio_from_text(text, filename="bark_generation.wav"):
+    # Generate audio from text using Hugging Face API
+    audio_bytes = query({"inputs": text})
+    
+    # Save audio to disk
+    with open(filename, "wb") as audio_file:
+        audio_file.write(audio_bytes)
+
+    return filename
+
+def play_audio(filename):
+    # Load and play the generated audio file
+    audio = AudioSegment.from_file(filename, format="wav")
+    play(audio)
+
 def main():
-    filename = "recognized_text.txt"
+    text_filename = "recognized_text.txt"
     
     # Convert speech to text
-    text = speech_to_text(filename)
+    text = speech_to_text(text_filename)
     
     # Generate content if text is not empty
     if text:
-        generate_content(text)
+        content = generate_content(text)
+        
+        # Generate audio from the content
+        audio_filename = generate_audio_from_text(content)
+        
+        # Play the generated audio
+        play_audio(audio_filename)
     else:
         print("No text was generated from speech. Skipping content generation.")
 

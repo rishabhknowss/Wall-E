@@ -1,0 +1,7 @@
+requests
+SpeechRecognition
+google-generativeai
+python-dotenv
+scipy
+pydub
+pyaudio
